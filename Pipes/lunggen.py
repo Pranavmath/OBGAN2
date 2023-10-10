@@ -258,12 +258,12 @@ class Discriminator(nn.Module):
         out = self.linear(out)
 
         return out
+
 def get_lung_generator(device, path):
     g_running = Generator(in_channel=128, input_code_dim=128, pixel_norm=False, tanh=False).to(device)
     # Do this by uploading the .model file dont use github
     g_running.load_state_dict(torch.load(path, map_location=device))
     return g_running
-"""
 
 def predict(generator, num_images):
   input_code_size = 128
