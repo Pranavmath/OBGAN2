@@ -52,6 +52,7 @@ def predict_cv(model, img, gt_bboxes, gt_labels):
 
   return loss
 
+"""
 !pip install torchviz
 
 !pip install -U openmim
@@ -166,3 +167,4 @@ y
 
 loss = model.loss(x, [y])
 loss
+"""
