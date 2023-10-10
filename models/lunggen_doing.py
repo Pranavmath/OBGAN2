@@ -10,7 +10,8 @@ Original file is located at
 import torch
 from torch import nn
 from torch.nn import functional as F
-
+from torchvision.utils import make_grid
+from PIL import Image
 from math import sqrt
 
 
@@ -276,6 +277,7 @@ def predict(generator, num_images):
   im = Image.fromarray(ndarr)
   return im
 
+"""
 import torchvision.transforms.functional as TF
 from torchvision.utils import make_grid
 from io import StringIO
@@ -283,3 +285,4 @@ from PIL import Image
 
 img = predict(g_running, 1)
 img
+"""
