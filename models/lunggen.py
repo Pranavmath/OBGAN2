@@ -258,11 +258,12 @@ class Discriminator(nn.Module):
         out = self.linear(out)
 
         return out
-
+"""
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 g_running = Generator(in_channel=128, input_code_dim=128, pixel_norm=False, tanh=False).to(device)
 # Do this by uploading the .model file dont use github
 g_running.load_state_dict(torch.load('/content/080000_g.model', map_location=device))
+"""
 
 def predict(generator, num_images):
   input_code_size = 128
