@@ -277,13 +277,3 @@ def predict(generator, num_images):
   ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
   im = Image.fromarray(ndarr)
   return im
-
-"""
-import torchvision.transforms.functional as TF
-from torchvision.utils import make_grid
-from io import StringIO
-from PIL import Image
-
-img = predict(g_running, 1)
-img
-"""
