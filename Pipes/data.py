@@ -6,7 +6,6 @@ import pandas as pd
 from PIL import Image
 import os
 
-
 def collate_fn(batch):
     return tuple(zip(*batch))
 
@@ -28,6 +27,7 @@ def nodule_dict(df):
 
 # Returns the percent of the area of the image taken by the biggest nodule in the image
 # Higher means easier, Lower means harder
+# Expects bboxes of each nodule
 def image_difficulty(image, nodules):
     _, width, height = image.size()
     area = width * height
@@ -47,7 +47,8 @@ def nodule_difficulty(nodule_bbox, image_area, max_area):
     else:
         return (nodule_area/image_area) * scaler
  
-
+ 
+# Dataset of lung images, bboxes, and its difficulties
 class OBData(Dataset):
     def __init__(self, csv, img_dir, image_transforms=None):
         self.csv = pd.read_csv(csv)
@@ -64,11 +65,30 @@ class OBData(Dataset):
         
         self.nodule_dict = nodule_dict(self.csv)
         self.to_tensor = transforms.Compose([transforms.ToTensor()])
+        
+        # Path to image - Its difficulty
+        self.difficulties = {}
+        for file_name in os.listdir(self.img_dir):
+            image_path = os.path.join(self.img_dir, file_name)
+            image = Image.open(image_path).convert("RGB")
+            image = self.to_tensor(image)
+            image = self.to_tensor(image)
+
+            nodules = self.nodule_dict[file_name]
+            nodules = torch.tensor(nodules)
+
+            self.difficulties[image_path] = image_difficulty(image, nodules)
+
     
     def __len__(self):
         # Num of images in img_dir
         return len(os.listdir(self.img_dir))
     
+    def get_from_difficulty(self, difficulty, delta):
+        image_paths = [pair[0] for pair in self.difficulties.items() if abs(pair[1]-difficulty) <= delta]
+        return [Image.open(path) for path in image_paths]
+    
+    # Returns image and nodules as tensor along with its difficulty
     def __getitem__(self, index):
         image_name = os.listdir(self.img_dir)[index]
         image_path = os.path.join(self.img_dir, image_name)
@@ -86,6 +106,7 @@ class OBData(Dataset):
         return image, nodules, diff
 
 
+# Dataset of nodules and its difficulties
 class NoduleData(Dataset):
     def __init__(self, csv, img_dir, max_size):
         self.csv = pd.read_csv(csv)
@@ -109,6 +130,7 @@ class NoduleData(Dataset):
         
         self.to_tensor = transforms.Compose([transforms.ToTensor()])
     
+    # Return a nodule (as a tensor) and its difficulty
     def __getitem__(self, index):
         image_name, nodule_bbox = self.nodules[index]
         image_path = os.path.join(self.img_dir, image_name)
@@ -127,7 +149,7 @@ class NoduleData(Dataset):
         background = Image.new("RGB", (self.max_size, self.max_size))
         background.paste(nodule, ((self.max_size - width)//2, (self.max_size - height)//2))
 
-        #background = self.to_tensor(background)
+        background = self.to_tensor(background)
         
         image_area = image.size[0] * image.size[1]
         diff = nodule_difficulty(nodule_bbox, image_area, (self.max_size)**2)
