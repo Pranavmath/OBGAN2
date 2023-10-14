@@ -1,5 +1,11 @@
 from PIL import Image
 import random
+import scipy
+import numpy as np
+
+centerposes = np.load("centerposes.npy")
+centerx_distrubution = scipy.stats.rv_histogram(np.histogram(centerposes[0], bins=100))
+centery_distrubution = scipy.stats.rv_histogram(np.histogram(centerposes[0], bins=100))
 
 # Place the center of each nodule image at a certain location on the background image (transperantly)
 # Nodules and Background image are PIL Images
@@ -21,4 +27,7 @@ def place_nodules(background_image, nodules, center_xy_nodules):
 
 # Gets a random center x(s) and center y(s) to put the nodule(s) in (use the histogram of nodules in real images)
 def get_centerx_getcentery(num_nodules):
-    pass 
+    centerxs = centerx_distrubution.rvs(size=num_nodules)
+    centerys = centery_distrubution.rvs(size=num_nodules)
+
+    return [(centerxs[i], centerys[i]) for i in range(len(centerxs))]

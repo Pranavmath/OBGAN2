@@ -51,6 +51,8 @@ lung_generator = get_lung_generator()
 nodule_generator = get_nodule_generator()
 
 
+# Need to get real bboxes and fake bboxes
+
 # Current (Start) Difficulty
 curr_diff = 1
 
