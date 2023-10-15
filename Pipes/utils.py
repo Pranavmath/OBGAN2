@@ -3,9 +3,12 @@ import random
 import scipy
 import numpy as np
 
-centerposes = np.load("centerposes.npy")
-centerx_distrubution = scipy.stats.rv_histogram(np.histogram(centerposes[0], bins=100))
-centery_distrubution = scipy.stats.rv_histogram(np.histogram(centerposes[0], bins=100))
+# The Minimum value that a sum of a row/column has to be to be counted as part of the nodule and not part of the background
+MIN_SUM = 7
+
+centerposes = np.load("centerposeshist.npy")
+centerx_distrubution = scipy.stats.rv_histogram(np.histogram(centerposes[0], bins=500))
+centery_distrubution = scipy.stats.rv_histogram(np.histogram(centerposes[1], bins=500))
 
 # Place the center of each nodule image at a certain location on the background image (transperantly)
 # Nodules and Background image are PIL Images
@@ -31,3 +34,28 @@ def get_centerx_getcentery(num_nodules):
     centerys = centery_distrubution.rvs(size=num_nodules)
 
     return [(centerxs[i], centerys[i]) for i in range(len(centerxs))]
+
+
+# Takes in PIL Image of nodule (+ its max size) and gets its dimension (width and height)
+# Not including the black background around the nodule
+def get_dim(nodule, max_size):
+    
+
+    nodule = np.array(nodule.convert("L"))
+    ones = np.ones((1, max_size))
+
+    # Sums of each column - 1, max_size
+    sum_colums = ones @ nodule
+
+    # Sum of each row - max_size, 1
+    sum_rows = nodule @ (ones.T)
+
+    width, height = 0, 0
+
+    for i in range(max_size):
+        if (sum_colums[0, i] > MIN_SUM):
+            width += 1
+        if (sum_rows[i, 0] > MIN_SUM):
+            height += 1
+    
+    return (width, height)

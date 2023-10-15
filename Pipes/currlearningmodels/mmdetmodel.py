@@ -12,42 +12,50 @@ import torchvision.transforms.functional as F
 from mmdet.structures import DetDataSample
 from mmengine.structures import InstanceData
 
-def predict_cv(model, img, gt_bboxes, gt_labels):
-  device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-  model.to(device)
+class LoadCVModel():
+    def __init__(self, model, device):
+        self.model = model
+        self.device = device
+    
+# Takes in model (nn.Module fron init_detector), and PIL img, its bbox (list) and labels (list) and outputs the model losses
+    def predict_cv(model, img, gt_bboxes, gt_labels):
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        model.to(device)
 
-  torch_img = F.pil_to_tensor(img)
-  x = torch.stack([torch_img.to(device).float()])
+        torch_img = F.pil_to_tensor(img)
+        x = torch.stack([torch_img.to(device).float()])
 
-  """
-  The DetDataSample must follow this format:
-  <DetDataSample(
+        """
+        The DetDataSample must follow this format:
+        <DetDataSample(
 
-      META INFORMATION
-      img_shape: _
-      scale_factor: _
+            META INFORMATION
+            img_shape: _
+            scale_factor: _
 
-      DATA FIELDS
-      batch_input_shape: _
-      gt_instances: <InstanceData(
+            DATA FIELDS
+            batch_input_shape: _
+            gt_instances: <InstanceData(
 
-              META INFORMATION
+                    META INFORMATION
 
-              DATA FIELDS
-              bboxes: _
-              labels: _
-          ) at _>
-  ) at _>
-  """
-  y = DetDataSample(metainfo={"img_shape": img.size, "scale_factor": (1, 1)})
-  y.batch_input_shape = img.size
+                    DATA FIELDS
+                    bboxes: _
+                    labels: _
+                ) at _>
+        ) at _>
+        """
+        y = DetDataSample(metainfo={"img_shape": img.size, "scale_factor": (1, 1)})
+        y.batch_input_shape = img.size
 
-  gt_instances = InstanceData()
-  gt_instances.bboxes = torch.tensor(gt_bboxes).to(device)
-  gt_instances.labels = torch.tensor(gt_labels).to(device)
+        gt_instances = InstanceData()
+        gt_instances.bboxes = torch.tensor(gt_bboxes).to(device)
+        gt_instances.labels = torch.tensor(gt_labels).to(device)
 
-  y.gt_instances = gt_instances
+        y.gt_instances = gt_instances
 
-  loss = model.loss(x, [y])
+        loss = model.loss(x, [y])
 
-  return loss
+        return loss
+
+

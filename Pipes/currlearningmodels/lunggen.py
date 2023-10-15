@@ -14,26 +14,29 @@ from torchvision.utils import make_grid
 from PIL import Image
 from math import sqrt
 
+class LoadLungGenerator():
+    # Gets lung generator
+    def __init__(self, device, path):
+        self.device = device
+        self.g_running = Generator(in_channel=128, input_code_dim=128, pixel_norm=False, tanh=False).to(device)
+        # Do this by uploading the .model file dont use github
+        self.g_running.load_state_dict(torch.load(path, map_location=device))
+    
+    # Return PIL Image given lung generator 
+    def lung_predict(self, num_images):
+        input_code_size = 128
+        step = 6
+        alpha = 1
+        with torch.no_grad():
+            images = self.g_running(torch.randn(num_images, input_code_size).to(self.device), step=step, alpha=alpha).data.cpu()
 
-def get_lung_generator(device, path):
-    g_running = Generator(in_channel=128, input_code_dim=128, pixel_norm=False, tanh=False).to(device)
-    # Do this by uploading the .model file dont use github
-    g_running.load_state_dict(torch.load(path, map_location=device))
-    return g_running
+        grid = make_grid(images, normalize=True, range=(-1, 1))
+        # Add 0.5 after unnormalizing to [0, 255] to round to the nearest integer
+        ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
+        im = Image.fromarray(ndarr)
+        return im
 
-# Return PIL Image
-def lung_predict(generator, num_images, device):
-  input_code_size = 128
-  step = 6
-  alpha = 1
-  with torch.no_grad():
-    images = generator(torch.randn(num_images, input_code_size).to(device), step=step, alpha=alpha).data.cpu()
-
-  grid = make_grid(images, normalize=True, range=(-1, 1))
-  # Add 0.5 after unnormalizing to [0, 255] to round to the nearest integer
-  ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
-  im = Image.fromarray(ndarr)
-  return im
+# -------------------------------- CLASSES BELLOW FOR GENERATOR LOADING (DONT CHANGE) --------------------
 
 class EqualLR:
     def __init__(self, name):

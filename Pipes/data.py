@@ -66,7 +66,7 @@ class OBData(Dataset):
         self.nodule_dict = nodule_dict(self.csv)
         self.to_tensor = transforms.Compose([transforms.ToTensor()])
         
-        # Path to image - Its difficulty
+        # image file name - Its difficulty
         self.difficulties = {}
         for file_name in os.listdir(self.img_dir):
             image_path = os.path.join(self.img_dir, file_name)
@@ -77,16 +77,17 @@ class OBData(Dataset):
             nodules = self.nodule_dict[file_name]
             nodules = torch.tensor(nodules)
 
-            self.difficulties[image_path] = image_difficulty(image, nodules)
+            self.difficulties[file_name] = image_difficulty(image, nodules)
 
     
     def __len__(self):
         # Num of images in img_dir
         return len(os.listdir(self.img_dir))
     
+    # Return list = [(image1, bbox1) ...] of images (PIL not Tensor) close to a given difficulty
     def get_from_difficulty(self, difficulty, delta):
-        image_paths = [pair[0] for pair in self.difficulties.items() if abs(pair[1]-difficulty) <= delta]
-        return [Image.open(path) for path in image_paths]
+        image_names = [pair[0] for pair in self.difficulties.items() if abs(pair[1]-difficulty) <= delta]
+        return [(Image.open(os.path.join(self.img_dir, image_name)), self.nodule_dict[image_name]) for image_name in image_names]
     
     # Returns image and nodules as tensor along with its difficulty
     def __getitem__(self, index):
