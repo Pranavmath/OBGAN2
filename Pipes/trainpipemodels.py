@@ -1,7 +1,12 @@
 import torch
 from torch import nn
 
-class Discriminator(nn.Module):
+
+class NoduleDiscriminator(nn.Module):
+    """
+    A Nodule Discrimiantor that takes in a 140x140 image and outputs a 1x1 tensor (discrimate).
+    """
+    
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 10, 7)
@@ -37,7 +42,12 @@ class Discriminator(nn.Module):
 
         return x
 
+
 class DifficultyPredictor(nn.Module):
+    """
+    A Nodule Discrimiantor that takes in a 140x140 image and outputs a 1x1 tensor (difficulty).
+    """
+    
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 10, 7)
@@ -72,7 +82,12 @@ class DifficultyPredictor(nn.Module):
 
         return x
 
+
 class NoduleGenerator(nn.Module):
+    """
+    Add stuff
+    """
+    
     def __init__(self, channels_noise, channels_img, features_g):
         super(NoduleGenerator, self).__init__()
         self.net = nn.Sequential(
