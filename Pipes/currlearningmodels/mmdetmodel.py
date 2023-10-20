@@ -14,16 +14,19 @@ from mmengine.structures import InstanceData
 
 class LoadCVModel():
     def __init__(self, model, device):
+        """
+        Device (cuda string) and path to load CV Model (String)
+        """
         self.model = model
         self.device = device
+        self.model.to(device)
     
-# Takes in model (nn.Module fron init_detector), and PIL img, its bbox (list) and labels (list) and outputs the model losses
-    def predict_cv(model, img, gt_bboxes, gt_labels):
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        model.to(device)
-
+    def predict_cv(img, gt_bboxes, gt_labels):
+        """
+        Takes in PIL img, its bboxes (list) and labels (list) and outputs the cv model losses
+        """
         torch_img = F.pil_to_tensor(img)
-        x = torch.stack([torch_img.to(device).float()])
+        x = torch.stack([torch_img.to(self.device).float()])
 
         """
         The DetDataSample must follow this format:
@@ -49,13 +52,11 @@ class LoadCVModel():
         y.batch_input_shape = img.size
 
         gt_instances = InstanceData()
-        gt_instances.bboxes = torch.tensor(gt_bboxes).to(device)
-        gt_instances.labels = torch.tensor(gt_labels).to(device)
+        gt_instances.bboxes = torch.tensor(gt_bboxes).to(self.device)
+        gt_instances.labels = torch.tensor(gt_labels).to(self.device)
 
         y.gt_instances = gt_instances
 
-        loss = model.loss(x, [y])
+        loss = self.model.loss(x, [y])
 
         return loss
-
-
