@@ -17,6 +17,9 @@ from math import sqrt
 class LoadLungGenerator():
     # Gets lung generator
     def __init__(self, device, path):
+        """
+        Device (cuda string) and path to load Generator (String)
+        """
         self.device = device
         self.g_running = Generator(in_channel=128, input_code_dim=128, pixel_norm=False, tanh=False).to(device)
         # Do this by uploading the .model file dont use github
@@ -24,6 +27,9 @@ class LoadLungGenerator():
     
     # Return PIL Image given lung generator 
     def lung_predict(self, num_images):
+        """
+        Takes in num_images (int) and then returns a grid of the lung images (PIL Image)
+        """
         input_code_size = 128
         step = 6
         alpha = 1
