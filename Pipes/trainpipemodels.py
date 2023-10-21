@@ -7,17 +7,17 @@ class NoduleDiscriminator(nn.Module):
     A Nodule Discrimiantor that takes in a 140x140 image and outputs a 1x1 tensor (discrimate).
     """
     
-    def __init__(self):
+    def __init__(self, channels_img):
         super().__init__()
-        self.conv1 = nn.Conv2d(3, 10, 7)
-        self.max1 = nn.MaxPool2d(6)
+        self.conv1 = nn.Conv2d(channels_img, 10, 7)
+        self.max1 = nn.MaxPool2d(4)
         self.conv2 = nn.Conv2d(10, 32, 5)
         self.max2 = nn.MaxPool2d(4)
         self.conv3 = nn.Conv2d(32, 100, 4)
         self.max3 = nn.MaxPool2d(4)
         self.flat = nn.Flatten()
-        self.fcn1 = nn.Linear(8100, 100)
-        self.fcn2 = nn.Linear(100, 1)
+        self.fcn1 = nn.Linear(100, 32)
+        self.fcn2 = nn.Linear(32, 1)
         self.drop1 = nn.Dropout(0.6)
         self.drop2 = nn.Dropout(0.2)
         self.relu = nn.ReLU()
@@ -48,19 +48,20 @@ class DifficultyPredictor(nn.Module):
     A Nodule Discrimiantor that takes in a 140x140 image and outputs a 1x1 tensor (difficulty).
     """
     
-    def __init__(self):
+    def __init__(self, channels_img):
         super().__init__()
-        self.conv1 = nn.Conv2d(3, 10, 7)
-        self.max1 = nn.MaxPool2d(6)
+        self.conv1 = nn.Conv2d(channels_img, 10, 7)
+        self.max1 = nn.MaxPool2d(4)
         self.conv2 = nn.Conv2d(10, 32, 5)
         self.max2 = nn.MaxPool2d(4)
         self.conv3 = nn.Conv2d(32, 100, 4)
         self.max3 = nn.MaxPool2d(4)
         self.flat = nn.Flatten()
-        self.fcn1 = nn.Linear(8100, 100)
-        self.fcn2 = nn.Linear(100, 1)
+        self.fcn1 = nn.Linear(100, 32)
+        self.fcn2 = nn.Linear(32, 1)
         self.drop1 = nn.Dropout(0.6)
         self.drop2 = nn.Dropout(0.2)
+        self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
     
     def forward(self, x):
@@ -103,7 +104,7 @@ class NoduleGenerator(nn.Module):
             nn.Tanh(),
         )
 
-        self.fcn = nn.Linear(100, 100)
+        self.fcn = nn.Linear(channels_noise, channels_noise)
 
     def _block(self, in_channels, out_channels, kernel_size, stride, padding):
         return nn.Sequential(
@@ -120,7 +121,15 @@ class NoduleGenerator(nn.Module):
         )
 
     def forward(self, noise, label):
+      """
+      Noise - Batch Size x Channels Noise x 1 x 1
+      Label - Batch Size x 1
+      """
+
+      noise = torch.squeeze(noise, dim=(2, 3))
+
       x = self.fcn(noise)
+
       x = torch.add(x, label)
 
       x = torch.unsqueeze(x, -1)

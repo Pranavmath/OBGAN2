@@ -28,16 +28,16 @@ class LoadNoduleGenerator():
         imgs = []
         
         for _ in range(num_images):
-        with torch.no_grad():
-          images = self.nodule_gen(torch.randn(1, input_code_size).to(self.device), # Passing in difficulty using diff 
-                            ).data.cpu()
-        
-        grid = make_grid(images, normalize=True, range=(-1, 1))
-        # Add 0.5 after unnormalizing to [0, 255] to round to the nearest integer
-        ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
-        im = Image.fromarray(ndarr)
-        
-        imgs.append(im)
+          with torch.no_grad():
+            images = self.nodule_gen(torch.randn(1, input_code_size).to(self.device), # Passing in difficulty using diff 
+                              ).data.cpu()
+          
+          grid = make_grid(images, normalize=True, range=(-1, 1))
+          # Add 0.5 after unnormalizing to [0, 255] to round to the nearest integer
+          ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
+          im = Image.fromarray(ndarr)
+          
+          imgs.append(im)
         
         return imgs
 
