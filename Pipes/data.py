@@ -130,6 +130,9 @@ class NoduleData(Dataset):
                 self.nodules.append((image_name, nodule))
         
         self.to_tensor = transforms.Compose([transforms.ToTensor()])
+
+    def __len__(self):
+        return len(self.nodules)
     
     # Return a nodule (as a tensor) and its difficulty
     def __getitem__(self, index):
