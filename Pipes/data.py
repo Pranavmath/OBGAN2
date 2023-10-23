@@ -3,7 +3,8 @@ import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 import pandas as pd
-from PIL import Image
+from PIL import Image, ImageDraw
+import numpy as np
 import os
 
 def collate_fn(batch):
@@ -131,6 +132,13 @@ class NoduleData(Dataset):
         
         self.to_tensor = transforms.Compose([transforms.ToTensor()])
 
+        # Mask to make nodules ellptical
+        size = (self.max_size, self.max_size)
+        self.mask = Image.new('L', size, 0)
+        draw = ImageDraw.Draw(self.mask) 
+        draw.ellipse((0, 0) + size, fill=255)
+        self.mask = self.mask.convert("RGB")
+
     def __len__(self):
         return len(self.nodules)
     
@@ -143,13 +151,22 @@ class NoduleData(Dataset):
         nodule = image.crop(nodule_bbox)
 
         width, height = nodule.size
-
+        
+        # Making sure that the width and height of the nodule is less than the max size
         if nodule.size[0] > self.max_size:
             nodule = nodule.crop((0, (height-self.max_size)//2, width, self.max_size + ((height-self.max_size)//2)))
         if nodule.size[1] > self.max_size:
             nodule = nodule.crop(((width - self.max_size)//2, 0, self.max_size + ((width-self.max_size)//2), height))
 
         width, height = nodule.size
+
+        
+        # Making the nodule elliptical (hadamard product of mask with the image)
+        mask = np.array(self.mask.resize((width, height))) / 255 
+        nodule = Image.fromarray(np.multiply(np.array(nodule), mask.astype(np.uint8)))
+        
+
+        # Adding the nodule to a maxsize x maxsize black background       
         background = Image.new("RGB", (self.max_size, self.max_size))
         background.paste(nodule, ((self.max_size - width)//2, (self.max_size - height)//2))
 
