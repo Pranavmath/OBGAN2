@@ -1,4 +1,4 @@
 # OBGAN2.0
 BEANS!!!!!
-Consider deleting trainmodels folder cause its just duplicated code
-sussy
+Nead to add the pth file for dino when training
+not here on github
