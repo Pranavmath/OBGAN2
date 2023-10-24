@@ -1,14 +1,16 @@
 from PIL import Image
 import random
-import scipy
+from scipy import stats
 import numpy as np
 
 # The Minimum value that a sum of a row/column has to be to be counted as part of the nodule and not part of the background
 MIN_SUM = 7
 
 centerposes = np.load("centerposeshist.npy")
-centerx_distrubution = scipy.stats.rv_histogram(np.histogram(centerposes[0], bins=500))
-centery_distrubution = scipy.stats.rv_histogram(np.histogram(centerposes[1], bins=500))
+centerx_distrubution = stats.rv_histogram(np.histogram(centerposes[0], bins=500))
+centery_distrubution = stats.rv_histogram(np.histogram(centerposes[1], bins=500))
+
+
 
 # Place the center of each nodule image at a certain location on the background image (transperantly)
 # Nodules and Background image are PIL Images
@@ -28,6 +30,7 @@ def place_nodules(background_image, nodules, center_xy_nodules):
     
     return background_image
 
+
 # Gets a random center x(s) and center y(s) to put the nodule(s) in (use the histogram of nodules in real images)
 def get_centerx_getcentery(num_nodules):
     centerxs = centerx_distrubution.rvs(size=num_nodules)
@@ -39,8 +42,6 @@ def get_centerx_getcentery(num_nodules):
 # Takes in PIL Image of nodule (+ its max size) and gets its dimension (width and height)
 # Not including the black background around the nodule
 def get_dim(nodule, max_size):
-    
-
     nodule = np.array(nodule.convert("L"))
     ones = np.ones((1, max_size))
 
@@ -59,3 +60,11 @@ def get_dim(nodule, max_size):
             height += 1
     
     return (width, height)
+
+
+# Takes in the current difficulty and the number of difficulties you want 
+# Outputs those number of random difficulties at and above the current difficulty
+# Uses a probability distrubution to give more weightage to the current difficulty 
+# Decreases weightage to the right, no weightage to the left of curr diff because we haven't gotten to that point yet in curriculum learning).
+def get_fake_difficulties(curr_difficulty, num_of_difficulties):
+    return stats.truncweibull_min.rvs(a=curr_difficulty, size=num_of_difficulties, b=1, c=1)

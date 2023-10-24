@@ -6,6 +6,7 @@ import pandas as pd
 from PIL import Image, ImageDraw
 import numpy as np
 import os
+import random
 
 def collate_fn(batch):
     return tuple(zip(*batch))
@@ -51,10 +52,12 @@ def nodule_difficulty(nodule_bbox, image_area, max_area):
  
 # Dataset of lung images, bboxes, and its difficulties
 class OBData(Dataset):
-    def __init__(self, csv, img_dir, image_transforms=None):
+    # Path to csv, path to img_dir for images with nodule, path to img_dir for control images (no nodules)
+    def __init__(self, csv, img_dir, control_img_dir, image_transforms=None):
         self.csv = pd.read_csv(csv)
         self.img_dir = img_dir
         self.transforms = image_transforms
+        self.control_img_dir = control_img_dir
 
         if set(self.csv.keys()) != set(["image", "xmin", "ymin", "xmax", "ymax", "label"]):
             raise Exception("Wrong csv format") 
@@ -79,17 +82,34 @@ class OBData(Dataset):
             nodules = torch.tensor(nodules)
 
             self.difficulties[file_name] = image_difficulty(image, nodules)
+        
+
+        self.control_images = os.listdir(self.control_img_dir)
 
     
     def __len__(self):
         # Num of images in img_dir
         return len(os.listdir(self.img_dir))
     
+
     # Return list = [(image1, bbox1) ...] of images (PIL not Tensor) close to a given difficulty
     def get_from_difficulty(self, difficulty, delta):
         image_names = [pair[0] for pair in self.difficulties.items() if abs(pair[1]-difficulty) <= delta]
         return [(Image.open(os.path.join(self.img_dir, image_name)), self.nodule_dict[image_name]) for image_name in image_names]
     
+
+    # Return list = [(image1, bbox1) ...] of images (PIL not Tensor) above a given difficulty 
+    def all_above_difficulty(self, difficulty):
+        image_names = [pair[0] for pair in self.difficulties.items() if pair[1] >= difficulty]
+        return [(Image.open(os.path.join(self.img_dir, image_name)), self.nodule_dict[image_name]) for image_name in image_names]
+    
+
+    # Return n number of control images - [(image1, bbox1) ...]
+    def get_control_images(self, num):
+        random_control_images = random.sample(self.control_images, num)
+        return [(Image.open(os.path.join(self.control_img_dir, image_name)), [[0, 0, 0, 0]]) for image_name in random_control_images]
+
+
     # Returns image and nodules as tensor along with its difficulty
     def __getitem__(self, index):
         image_name = os.listdir(self.img_dir)[index]

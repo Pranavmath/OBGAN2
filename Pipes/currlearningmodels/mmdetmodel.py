@@ -21,7 +21,7 @@ class LoadCVModel():
         self.device = device
         self.model.to(device)
     
-    def predict_cv(img, gt_bboxes, gt_labels):
+    def predict_cv(self, img, gt_bboxes, gt_labels):
         """
         Takes in PIL img, its bboxes (list) and labels (list) and outputs the cv model losses
         """

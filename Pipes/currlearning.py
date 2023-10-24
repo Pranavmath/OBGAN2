@@ -2,15 +2,13 @@ import numpy as np
 import torch
 from torch import optim
 
-from mmengine.utils import track_iter_progress
-from mmdet.registry import VISUALIZERS
-from mmdet.apis import init_detector, inference_detector
+from mmdet.apis import init_detector
 
 from Pipes.currlearningmodels.lunggen import LoadLungGenerator
 from Pipes.currlearningmodels.nodulegen import LoadNoduleGenerator
 from Pipes.currlearningmodels.mmdetmodel import LoadCVModel
 from data import OBData
-from utils import place_nodules, get_centerx_getcentery, get_dim
+from utils import place_nodules, get_centerx_getcentery, get_dim, get_fake_difficulties
 import random
 
 # The maximum size of a nodule (length)
@@ -39,12 +37,12 @@ Things to keep note of:
 
 # ------------------------------------- ACTUAL CODE ---------------------------------------------
 
-ob_dataset = OBData()
+ob_dataset = OBData(csv="/finalCXRDataset/final.csv", img_dir="/finalCXRDataset/images", control_img_dir="/finalCXRDataset/controlimages")
 
 
 # Specify the path to model config and checkpoint file
-config_file = 'savedcvmodelmmdet/config.py'
-checkpoint_file = 'savedcvmodelmmdet/_____INSERT_PRETRAINED_MODEL_SAVE___FILE'
+config_file = '/savedcvmodelmmdet/config.py'
+checkpoint_file = '/savedcvmodelmmdet/dino-4scale_r50_8xb2-12e_coco.pth'
 
 
 # Build the model from a config file and a checkpoint file
@@ -52,8 +50,8 @@ cv_model = LoadCVModel(model=init_detector(config_file, checkpoint_file, device=
 
 
 # Generators
-lung_generator = LoadLungGenerator()
-nodule_generator = LoadNoduleGenerator()
+lung_generator = LoadLungGenerator(device=device, path="/savedmodels/080000_g.model")
+nodule_generator = LoadNoduleGenerator(device=device, path="/savedmodels/nodulegenerator.pth")
 
 
 # Optimizer
@@ -71,13 +69,17 @@ curr_diff = 1
 
 while curr_diff >= END_DIFF:
     for _ in range(NUM_EPOCHS_FOR_STEP):
-        # Gets all the real images and nodules - [(real_image1, real_bbox1), ...] near a given difficulty
-        real_images_bboxes = ob_dataset.get_from_difficulty(curr_diff, DELTA_DIFF)
-        # All the fake images and nodules - [(fake_image1, fake_bbox1), ...] at this difficulty
+        # Gets all the real images and nodules - [(real_image1, real_bbox1), ...] above a given difficulty
+        real_images_bboxes = ob_dataset.all_above_difficulty(curr_diff)
+
+        # All the fake images and nodules - [(fake_image1, fake_bbox1), ...] at (and above) this difficulty
         fake_images_bboxes = []
 
-        # Gets NUM_FAKE number of fake images/bboxes
-        for _ in range(NUM_FAKE):
+        # The fake difficulties to use (a bunch of random difficulties at the current difficulty and above)
+        fake_difficulties = get_fake_difficulties(curr_difficulty=curr_diff, num_of_difficulties=NUM_FAKE)
+
+        # Gets NUM_FAKE number of fake images/bboxes at the sampled fake difficulties
+        for fake_diff in fake_difficulties:
             # Number of nodules in this given fake image
             num_nodules_in_image = random.randint(1, 4)
 
@@ -85,7 +87,7 @@ while curr_diff >= END_DIFF:
             background_lung_image = lung_generator.lung_predict(num_images=1)
 
             # Generates the nodules (at the curr diff) to be placed on the backgroudn lung image (always MAX_SIZE x MAX_SIZE and have a black border around them)
-            nodules = nodule_generator.nodule_predict(diff=curr_diff, num_images=num_nodules_in_image)
+            nodules = nodule_generator.nodule_predict(diff=fake_diff, num_images=num_nodules_in_image)
             
             # Generates x and y values to put the center of each nodule on the lung image (using a distrubution of nodules in real images) 
             center_xys = get_centerx_getcentery(num_nodules=num_nodules_in_image)
@@ -108,9 +110,12 @@ while curr_diff >= END_DIFF:
 
             fake_images_bboxes.append((fake_image, fake_bboxes))
         
-        
-        # Shuffles the real and fake images/bboxes
-        all_images_bboxes = random.shuffle(real_images_bboxes + fake_images_bboxes)
+
+        # Get the control images (no nodules) and bboxes. Make sure to get the same amount as the real images + fake images so data is balanced
+        control_images_bboxes = ob_dataset.get_control_images(num=len(real_images_bboxes) + len(fake_images_bboxes))
+
+        # Shuffles the real (with nodule), fake, and control images/bboxes
+        all_images_bboxes = random.shuffle(real_images_bboxes + fake_images_bboxes + control_images_bboxes)
         
 
         # Trains cv model on all images
