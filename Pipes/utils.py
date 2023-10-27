@@ -6,7 +6,7 @@ import numpy as np
 # The Minimum value that a sum of a row/column has to be to be counted as part of the nodule and not part of the background
 MIN_SUM = 7
 
-centerposes = np.load("centerposeshist.npy")
+centerposes = np.load("OBGAN2/centerposeshist.npy")
 centerx_distrubution = stats.rv_histogram(np.histogram(centerposes[0], bins=500))
 centery_distrubution = stats.rv_histogram(np.histogram(centerposes[1], bins=500))
 
