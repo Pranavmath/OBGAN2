@@ -76,7 +76,6 @@ class OBData(Dataset):
             image_path = os.path.join(self.img_dir, file_name)
             image = Image.open(image_path).convert("RGB")
             image = self.to_tensor(image)
-            image = self.to_tensor(image)
 
             nodules = self.nodule_dict[file_name]
             nodules = torch.tensor(nodules)
