@@ -37,12 +37,12 @@ Things to keep note of:
 
 # ------------------------------------- ACTUAL CODE ---------------------------------------------
 
-ob_dataset = OBData(csv="/finalCXRDataset/final.csv", img_dir="/finalCXRDataset/images", control_img_dir="/finalCXRDataset/controlimages")
+ob_dataset = OBData(csv="OBGAN2/finalCXRDataset/final.csv", img_dir="OBGAN2/finalCXRDataset/images", control_img_dir="OBGAN2/finalCXRDataset/controlimages")
 
 
 # Specify the path to model config and checkpoint file
-config_file = '/savedcvmodelmmdet/config.py'
-checkpoint_file = '/savedcvmodelmmdet/dino-4scale_r50_8xb2-12e_coco.pth'
+config_file = 'OBGAN2/savedcvmodelmmdet/config.py'
+checkpoint_file = 'OBGAN2/savedcvmodelmmdet/dino-4scale_r50_8xb2-12e_coco.pth'
 
 
 # Build the model from a config file and a checkpoint file
@@ -50,8 +50,8 @@ cv_model = LoadCVModel(model=init_detector(config_file, checkpoint_file, device=
 
 
 # Generators
-lung_generator = LoadLungGenerator(device=device, path="/savedmodels/080000_g.model")
-nodule_generator = LoadNoduleGenerator(device=device, path="/savedmodels/nodulegenerator.pth")
+lung_generator = LoadLungGenerator(device=device, path="OBGAN2/savedmodels/080000_g.model")
+nodule_generator = LoadNoduleGenerator(device=device, path="OBGAN2/savedmodels/nodulegenerator.pth")
 
 
 # Optimizer
