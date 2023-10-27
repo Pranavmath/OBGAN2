@@ -1,8 +1,8 @@
 import os
 
 # The new config inherits a base config to highlight the necessary modification
-_base_ = "/savedcvmodelmmdet/dino-4scale_r50_8xb2-12e_coco.py"
-load_from = "/savedcvmodelmmdet/dino-4scale_r50_8xb2-12e_coco.pth"
+_base_ = "dino-4scale_r50_8xb2-12e_coco.py"
+load_from = "dino-4scale_r50_8xb2-12e_coco.pth"
 
 # We also need to change the num_classes in head to match the dataset's annotation
 # KEY: Needs to be changed based on each model
