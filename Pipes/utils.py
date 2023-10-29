@@ -3,6 +3,8 @@ import random
 from scipy import stats
 import numpy as np
 
+mask = Image.open("mask.png").convert("L").resize((140, 140))
+
 # The Minimum value that a sum of a row/column has to be to be counted as part of the nodule and not part of the background
 MIN_SUM = 7
 
@@ -21,20 +23,18 @@ def rgba_to_rgb(image):
 def place_nodules(background_image, nodules, center_xy_nodules):
     assert len(nodules) == len(center_xy_nodules)
 
-    background_image = background_image.convert("RGBA")
+    background_image = background_image.convert("L")
 
     for nodule_idx in range(len(nodules)):
         centerx, centery = center_xy_nodules[nodule_idx]
         nodule = nodules[nodule_idx]
         width, height = nodule.size
 
-        nodule = nodule.convert("RGBA")
+        nodule = nodule.convert("L")
 
-        background_image.paste(nodule, (centerx - width//2, centery - height//2), nodule)
-  
-    background_image.save("quandale.png")
-    
-    return rgba_to_rgb(background_image)
+        background_image.paste(nodule, (centerx - width//2, centery - height//2), mask)
+      
+    return background_image.convert("RGB")
 
 
 # Gets a random center x(s) and center y(s) to put the nodule(s) in (use the histogram of nodules in real images)
