@@ -55,7 +55,7 @@ nodule_generator = LoadNoduleGenerator(device=device, path="OBGAN2/savedmodels/n
 
 
 # Optimizer
-optimizer = optim.Adam(param=cv_model.model.parameters(), lr=0.007)
+optimizer = optim.Adam(params=cv_model.model.parameters(), lr=0.007)
 
 
 # Set to training mode (if not already)
@@ -108,6 +108,8 @@ while curr_diff >= END_DIFF:
             # Places the center of each nodule on the generated lung iamge using the centerx and centerys
             fake_image = place_nodules(background_image=background_lung_image, nodules=nodules, center_xy_nodules=center_xys)
 
+            fake_image.save("jamal.png")
+
             fake_images_bboxes.append((fake_image, fake_bboxes))
         
 
@@ -115,9 +117,15 @@ while curr_diff >= END_DIFF:
         control_images_bboxes = ob_dataset.get_control_images(num=len(real_images_bboxes) + len(fake_images_bboxes))
 
         # Shuffles the real (with nodule), fake, and control images/bboxes
-        all_images_bboxes = random.shuffle(real_images_bboxes + fake_images_bboxes + control_images_bboxes)
-        
+        all_images_bboxes = real_images_bboxes + fake_images_bboxes + control_images_bboxes
+        random.shuffle(all_images_bboxes)
 
+        for im, _ in all_images_bboxes:
+          if im.mode != "RGB":
+            print("A")
+
+
+        
         # Trains cv model on all images
         for image, bbox in all_images_bboxes:
             # Clear all gradients

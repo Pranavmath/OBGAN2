@@ -34,9 +34,9 @@ class LoadNoduleGenerator():
         
         for _ in range(num_images):
           with torch.no_grad():
-            image = self.nodule_gen(torch.randn(1, self.channels_noise).to(self.device), diff)[0]
+            image = self.nodule_gen(torch.randn(1, self.channels_noise, 1, 1).to(self.device), diff)[0]
           
-          grid = make_grid(image, normalize=True, range=(-1, 1))
+          grid = make_grid(image, normalize=True, value_range=(-1, 1))
           # Add 0.5 after unnormalizing to [0, 255] to round to the nearest integer
           ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
           im = Image.fromarray(ndarr)

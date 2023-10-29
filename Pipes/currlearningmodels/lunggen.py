@@ -34,12 +34,14 @@ class LoadLungGenerator():
         step = 6
         alpha = 1
         with torch.no_grad():
-            images = self.g_running(torch.randn(num_images, input_code_size).to(self.device), step=step, alpha=alpha).data.cpu()
+            images = self.g_running(torch.randn(num_images, input_code_size, 1, 1).to(self.device), step=step, alpha=alpha).data.cpu()
 
-        grid = make_grid(images, normalize=True, range=(-1, 1))
+        grid = make_grid(images, normalize=True, value_range=(-1, 1))
         # Add 0.5 after unnormalizing to [0, 255] to round to the nearest integer
         ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
         im = Image.fromarray(ndarr)
+        im = im.resize((1024, 1024)).convert("RGB")
+
         return im
 
 # -------------------------------- CLASSES BELLOW FOR GENERATOR LOADING (DONT CHANGE) --------------------

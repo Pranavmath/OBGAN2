@@ -94,19 +94,19 @@ class OBData(Dataset):
     # Return list = [(image1, bbox1) ...] of images (PIL not Tensor) close to a given difficulty
     def get_from_difficulty(self, difficulty, delta):
         image_names = [pair[0] for pair in self.difficulties.items() if abs(pair[1]-difficulty) <= delta]
-        return [(Image.open(os.path.join(self.img_dir, image_name)), self.nodule_dict[image_name]) for image_name in image_names]
+        return [(Image.open(os.path.join(self.img_dir, image_name)).convert("RGB"), self.nodule_dict[image_name]) for image_name in image_names]
     
 
     # Return list = [(image1, bbox1) ...] of images (PIL not Tensor) above a given difficulty 
     def all_above_difficulty(self, difficulty):
         image_names = [pair[0] for pair in self.difficulties.items() if pair[1] >= difficulty]
-        return [(Image.open(os.path.join(self.img_dir, image_name)), self.nodule_dict[image_name]) for image_name in image_names]
+        return [(Image.open(os.path.join(self.img_dir, image_name)).convert("RGB"), self.nodule_dict[image_name]) for image_name in image_names]
     
 
     # Return n number of control images - [(image1, bbox1) ...]
     def get_control_images(self, num):
         random_control_images = random.sample(self.control_images, num)
-        return [(Image.open(os.path.join(self.control_img_dir, image_name)), [[0, 0, 0, 0]]) for image_name in random_control_images]
+        return [(Image.open(os.path.join(self.control_img_dir, image_name)).convert("RGB"), [[0, 0, 0, 0]]) for image_name in random_control_images]
 
 
     # Returns image and nodules as tensor along with its difficulty
