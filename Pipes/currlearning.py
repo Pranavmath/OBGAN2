@@ -76,7 +76,7 @@ print("Starting")
 
 while curr_diff >= END_DIFF:
     # Num fake images (calculated from curr_diff)
-    num_fake = END_NUM_FAKE + ((START_NUM_FAKE - END_NUM_FAKE)/(START_DIFF - END_DIFF)) * (curr_diff - END_DIFF)
+    num_fake = int(END_NUM_FAKE + ((START_NUM_FAKE - END_NUM_FAKE)/(START_DIFF - END_DIFF)) * (curr_diff - END_DIFF))
 
     for e in range(NUM_EPOCHS_FOR_STEP):
         # Gets all the real images and nodules - [(real_image1, real_bbox1), ...] above a given difficulty
@@ -160,3 +160,7 @@ while curr_diff >= END_DIFF:
 
     # Steps the current difficulty down (makes it harder)
     curr_diff -= STEP
+
+
+# Saving the model
+torch.save(cv_model.model.state_dict(), "dino.pth")
