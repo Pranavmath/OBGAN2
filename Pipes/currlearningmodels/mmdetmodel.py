@@ -52,8 +52,8 @@ class LoadCVModel():
         y.batch_input_shape = img.size
 
         gt_instances = InstanceData()
-        gt_instances.bboxes = torch.tensor(gt_bboxes).to(self.device)
-        gt_instances.labels = torch.tensor(gt_labels).to(self.device)
+        gt_instances.bboxes = torch.tensor(gt_bboxes).to(self.device).float()
+        gt_instances.labels = torch.tensor(gt_labels).to(self.device).long()
 
         y.gt_instances = gt_instances
 

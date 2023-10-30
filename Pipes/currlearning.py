@@ -55,7 +55,8 @@ nodule_generator = LoadNoduleGenerator(device=device, path="OBGAN2/savedmodels/n
 
 
 # Optimizer
-optimizer = optim.Adam(params=cv_model.model.parameters(), lr=0.007)
+# Lr needs to be low enough or error
+optimizer = optim.Adam(params=cv_model.model.parameters(), lr=0.0007)
 
 
 # Set to training mode (if not already)
@@ -65,7 +66,7 @@ cv_model.model.train()
 # Current (Start) Difficulty
 curr_diff = 1
 
-
+print("Starting")
 
 while curr_diff >= END_DIFF:
     for _ in range(NUM_EPOCHS_FOR_STEP):
@@ -108,8 +109,6 @@ while curr_diff >= END_DIFF:
             # Places the center of each nodule on the generated lung iamge using the centerx and centerys
             fake_image = place_nodules(background_image=background_lung_image, nodules=nodules, center_xy_nodules=center_xys)
 
-            fake_image.save("jamal.png")
-
             fake_images_bboxes.append((fake_image, fake_bboxes))
         
 
@@ -119,11 +118,6 @@ while curr_diff >= END_DIFF:
         # Shuffles the real (with nodule), fake, and control images/bboxes
         all_images_bboxes = real_images_bboxes + fake_images_bboxes + control_images_bboxes
         random.shuffle(all_images_bboxes)
-
-        for im, _ in all_images_bboxes:
-          if im.mode != "RGB":
-            print("A")
-
 
         
         # Trains cv model on all images
@@ -138,9 +132,9 @@ while curr_diff >= END_DIFF:
             loss = cv_model.predict_cv(img=image, gt_bboxes=bbox, gt_labels=labels)
 
             # Do the loss backwards on 3 components: loss_cls, loss_bbox, loss_iou
-            loss["loss_cls"].backward()
-            loss["loss_bbox"].backward()
-            loss["loss_iou"].backward()
+            total_loss = loss["loss_cls"] + loss["loss_bbox"]
+            total_loss.backward()
+            #loss["loss_iou"].backward()
 
             optimizer.step()
     

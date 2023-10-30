@@ -3,7 +3,7 @@ import random
 from scipy import stats
 import numpy as np
 
-mask = Image.open("mask.png").convert("L").resize((140, 140))
+mask = Image.open("OBGAN2/mask.png").convert("L").resize((140, 140))
 
 # The Minimum value that a sum of a row/column has to be to be counted as part of the nodule and not part of the background
 MIN_SUM = 7
