@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from torch import optim
+from torch.utils.tensorboard import SummaryWriter
 
 from mmdet.apis import init_detector
 
@@ -13,14 +14,16 @@ import random
 
 # The maximum size of a nodule (length)
 MAX_SIZE = 140
+# Starting Difficulty
+START_DIFF = 0.96
 # Step in difficulty when training the model (change in difficulty must be negative beacause smaller difficulty means it's harder)
-STEP = 0.1
-# Used to get all the real images that have a difficulty that it at max delta away from the current step in difficlty
-DELTA_DIFF = 0.05
+STEP = 0.05
 # Ending Difficulty
 END_DIFF = 0.01
-# Number of Fake Images
-NUM_FAKE = 100
+# Number of Fake Images at the starting difficulty
+START_NUM_FAKE = 100
+# Number of Fake Images at the ending difficulty
+END_NUM_FAKE = 200
 # Number of epochs for each step in difficulty
 NUM_EPOCHS_FOR_STEP = 3
 # CUDA DEVICE
@@ -36,6 +39,9 @@ Things to keep note of:
 """
 
 # ------------------------------------- ACTUAL CODE ---------------------------------------------
+
+writer = SummaryWriter()
+
 
 ob_dataset = OBData(csv="OBGAN2/finalCXRDataset/final.csv", img_dir="OBGAN2/finalCXRDataset/images", control_img_dir="OBGAN2/finalCXRDataset/controlimages")
 
@@ -64,12 +70,15 @@ cv_model.model.train()
 
 
 # Current (Start) Difficulty
-curr_diff = 1
+curr_diff = START_DIFF
 
 print("Starting")
 
 while curr_diff >= END_DIFF:
-    for _ in range(NUM_EPOCHS_FOR_STEP):
+    # Num fake images (calculated from curr_diff)
+    num_fake = END_NUM_FAKE + ((START_NUM_FAKE - END_NUM_FAKE)/(START_DIFF - END_DIFF)) * (curr_diff - END_DIFF)
+
+    for e in range(NUM_EPOCHS_FOR_STEP):
         # Gets all the real images and nodules - [(real_image1, real_bbox1), ...] above a given difficulty
         real_images_bboxes = ob_dataset.all_above_difficulty(curr_diff)
 
@@ -77,7 +86,7 @@ while curr_diff >= END_DIFF:
         fake_images_bboxes = []
 
         # The fake difficulties to use (a bunch of random difficulties at the current difficulty and above)
-        fake_difficulties = get_fake_difficulties(curr_difficulty=curr_diff, num_of_difficulties=NUM_FAKE)
+        fake_difficulties = get_fake_difficulties(curr_difficulty=curr_diff, num_of_difficulties=num_fake)
 
         # Gets NUM_FAKE number of fake images/bboxes at the sampled fake difficulties
         for fake_diff in fake_difficulties:
@@ -120,6 +129,8 @@ while curr_diff >= END_DIFF:
         random.shuffle(all_images_bboxes)
 
         
+        sum_loss = 0
+        
         # Trains cv model on all images
         for image, bbox in all_images_bboxes:
             # Clear all gradients
@@ -137,6 +148,14 @@ while curr_diff >= END_DIFF:
             #loss["loss_iou"].backward()
 
             optimizer.step()
+
+            sum_loss += total_loss.item()
+        
+
+        avg_loss = sum_loss/len(all_images_bboxes)
+        
+        writer.add_scalar("Loss/train", avg_loss, curr_diff - STEP * (e/NUM_EPOCHS_FOR_STEP))
+
     
 
     # Steps the current difficulty down (makes it harder)

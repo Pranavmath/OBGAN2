@@ -12,12 +12,6 @@ centerposes = np.load("OBGAN2/centerposeshist.npy")
 centerx_distrubution = stats.rv_histogram(np.histogram(centerposes[0], bins=500))
 centery_distrubution = stats.rv_histogram(np.histogram(centerposes[1], bins=500))
 
-# RGBA to RGB
-def rgba_to_rgb(image):
-    background = Image.new("RGB", image.size, (255, 255, 255))
-    background.paste(image, mask = image.split()[3])
-    return background
-
 # Place the center of each nodule image at a certain location on the background image (transperantly)
 # Nodules and Background image are PIL Images
 def place_nodules(background_image, nodules, center_xy_nodules):
