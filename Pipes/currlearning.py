@@ -23,7 +23,7 @@ END_DIFF = 0.01
 # Number of Fake Images at the starting difficulty
 START_NUM_FAKE = 100
 # Number of Fake Images at the ending difficulty
-END_NUM_FAKE = 200
+END_NUM_FAKE = 300
 # Number of epochs for each step in difficulty
 NUM_EPOCHS_FOR_STEP = 3
 # CUDA DEVICE
