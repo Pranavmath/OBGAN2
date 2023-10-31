@@ -79,6 +79,9 @@ while curr_diff >= END_DIFF:
     num_fake = int(END_NUM_FAKE + ((START_NUM_FAKE - END_NUM_FAKE)/(START_DIFF - END_DIFF)) * (curr_diff - END_DIFF))
 
     for e in range(NUM_EPOCHS_FOR_STEP):
+        print(f"Difficulty: {curr_diff}, Epoch: {e}")
+
+        
         # Gets all the real images and nodules - [(real_image1, real_bbox1), ...] above a given difficulty
         real_images_bboxes = ob_dataset.all_above_difficulty(curr_diff)
 
