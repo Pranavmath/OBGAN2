@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from torch import optim
-from torch.utils.tensorboard import SummaryWriter
 
 from mmdet.apis import init_detector
 
@@ -40,8 +39,6 @@ Things to keep note of:
 
 # ------------------------------------- ACTUAL CODE ---------------------------------------------
 
-writer = SummaryWriter()
-
 
 ob_dataset = OBData(csv="OBGAN2/finalCXRDataset/final.csv", img_dir="OBGAN2/finalCXRDataset/images", control_img_dir="OBGAN2/finalCXRDataset/controlimages")
 
@@ -79,9 +76,6 @@ while curr_diff >= END_DIFF:
     num_fake = int(END_NUM_FAKE + ((START_NUM_FAKE - END_NUM_FAKE)/(START_DIFF - END_DIFF)) * (curr_diff - END_DIFF))
 
     for e in range(NUM_EPOCHS_FOR_STEP):
-        print(f"Difficulty: {curr_diff}, Epoch: {e}")
-
-        
         # Gets all the real images and nodules - [(real_image1, real_bbox1), ...] above a given difficulty
         real_images_bboxes = ob_dataset.all_above_difficulty(curr_diff)
 
@@ -156,10 +150,13 @@ while curr_diff >= END_DIFF:
         
 
         avg_loss = sum_loss/len(all_images_bboxes)
-        
-        writer.add_scalar("Loss/train", avg_loss, curr_diff - STEP * (e/NUM_EPOCHS_FOR_STEP))
+
+        print(f"Difficulty: {curr_diff}, Epoch: {e}, Avg Loss: {avg_loss}")
+
 
     
+    # Checkpointing the model
+    torch.save(cv_model.model.state_dict(), "dinocheckpoint.pth")
 
     # Steps the current difficulty down (makes it harder)
     curr_diff -= STEP
