@@ -16,13 +16,13 @@ MAX_SIZE = 140
 # Starting Difficulty
 START_DIFF = 0.96
 # Step in difficulty when training the model (change in difficulty must be negative beacause smaller difficulty means it's harder)
-STEP = 0.05
+STEP = 0.0167
 # Ending Difficulty
 END_DIFF = 0.01
 # Number of Fake Images at the starting difficulty
-START_NUM_FAKE = 100
+START_NUM_FAKE = 400
 # Number of Fake Images at the ending difficulty
-END_NUM_FAKE = 300
+END_NUM_FAKE = 0
 # Number of epochs for each step in difficulty
 NUM_EPOCHS_FOR_STEP = 3
 # CUDA DEVICE
