@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from torch import optim
-from torch.utils.tensorboard import SummaryWriter
 
 from mmdet.apis import init_detector
 
@@ -17,13 +16,13 @@ MAX_SIZE = 140
 # Starting Difficulty
 START_DIFF = 0.96
 # Step in difficulty when training the model (change in difficulty must be negative beacause smaller difficulty means it's harder)
-STEP = 0.05
+STEP = 0.0167
 # Ending Difficulty
 END_DIFF = 0.01
 # Number of Fake Images at the starting difficulty
-START_NUM_FAKE = 100
+START_NUM_FAKE = 400
 # Number of Fake Images at the ending difficulty
-END_NUM_FAKE = 300
+END_NUM_FAKE = 0
 # Number of epochs for each step in difficulty
 NUM_EPOCHS_FOR_STEP = 3
 # CUDA DEVICE
@@ -39,8 +38,6 @@ Things to keep note of:
 """
 
 # ------------------------------------- ACTUAL CODE ---------------------------------------------
-
-writer = SummaryWriter()
 
 
 ob_dataset = OBData(csv="OBGAN2/finalCXRDataset/final.csv", img_dir="OBGAN2/finalCXRDataset/images", control_img_dir="OBGAN2/finalCXRDataset/controlimages")
@@ -153,10 +150,13 @@ while curr_diff >= END_DIFF:
         
 
         avg_loss = sum_loss/len(all_images_bboxes)
-        
-        writer.add_scalar("Loss/train", avg_loss, curr_diff - STEP * (e/NUM_EPOCHS_FOR_STEP))
+
+        print(f"Difficulty: {curr_diff}, Epoch: {e}, Avg Loss: {avg_loss}")
+
 
     
+    # Checkpointing the model
+    torch.save(cv_model.model.state_dict(), "dinocheckpoint.pth")
 
     # Steps the current difficulty down (makes it harder)
     curr_diff -= STEP
