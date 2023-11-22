@@ -106,7 +106,7 @@ class OBData(Dataset):
     # Return n number of control images - [(image1, bbox1) ...]
     def get_control_images(self, num):
         random_control_images = random.sample(self.control_images, num)
-        return [(Image.open(os.path.join(self.control_img_dir, image_name)).convert("RGB"), [[0, 0, 0, 0]]) for image_name in random_control_images]
+        return [(Image.open(os.path.join(self.control_img_dir, image_name)).convert("RGB"), [[0, 0, 1, 1]]) for image_name in random_control_images]
 
 
     # Returns image and nodules as tensor along with its difficulty

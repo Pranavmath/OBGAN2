@@ -2,14 +2,13 @@ import numpy as np
 import torch
 from torch import optim
 
-from mmdet.apis import init_detector
-
 from Pipes.currlearningmodels.lunggen import LoadLungGenerator
 from Pipes.currlearningmodels.nodulegen import LoadNoduleGenerator
 from Pipes.currlearningmodels.mmdetmodel import LoadCVModel
 from data import OBData
 from utils import place_nodules, get_centerx_getcentery, get_dim, get_fake_difficulties, batch_data
 import random
+from time import time
 
 import wandb
 
@@ -86,6 +85,7 @@ while curr_diff >= END_DIFF:
         # The fake difficulties to use (a bunch of random difficulties at the current difficulty and above)
         fake_difficulties = get_fake_difficulties(curr_difficulty=curr_diff, num_of_difficulties=num_fake)
 
+
         # Gets NUM_FAKE number of fake images/bboxes at the sampled fake difficulties
         for fake_diff in fake_difficulties:
             # Number of nodules in this given fake image
@@ -118,7 +118,7 @@ while curr_diff >= END_DIFF:
 
             fake_images_bboxes.append((fake_image, fake_bboxes))
         
-
+        
         # Get the control images (no nodules) and bboxes. Make sure to get the same amount as the real images + fake images so data is balanced
         control_images_bboxes = ob_dataset.get_control_images(num=len(real_images_bboxes) + len(fake_images_bboxes))
 
@@ -145,9 +145,9 @@ while curr_diff >= END_DIFF:
 
             sum_loss += losses.item()
         
-
         avg_loss = sum_loss/len(all_images_bboxes)
 
+        print("epoch avg loss: " + str(avg_loss))
         wandb.log({"epoch avg loss": avg_loss})
 
     # Steps the current difficulty down (makes it harder)
