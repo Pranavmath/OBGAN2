@@ -12,6 +12,25 @@ centerposes = np.load("OBGAN2/centerposeshist.npy")
 centerx_distrubution = stats.rv_histogram(np.histogram(centerposes[0], bins=500))
 centery_distrubution = stats.rv_histogram(np.histogram(centerposes[1], bins=500))
 
+# ------------------------------------------------------------------------------------
+
+def batch(iterable, n=1):
+    l = len(iterable)
+    for ndx in range(0, l, n):
+        yield iterable[ndx:min(ndx + n, l)]
+
+def batch_data(l, b_size):
+    new_l = []
+
+    batched_images = list(batch([ele[0] for ele in l], b_size))
+    batched_bboxes = list(batch([ele[1] for ele in l], b_size))
+
+    for i in range(len(batched_images)):
+        new_l.append((batched_images[i], batched_bboxes[i]))
+    
+    return new_l
+
+
 # Place the center of each nodule image at a certain location on the background image (transperantly)
 # Nodules and Background image are PIL Images
 def place_nodules(background_image, nodules, center_xy_nodules):

@@ -9,54 +9,49 @@ Original file is located at
 
 import torch
 import torchvision.transforms.functional as F
-from mmdet.structures import DetDataSample
-from mmengine.structures import InstanceData
+import torchvision
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
 class LoadCVModel():
-    def __init__(self, model, device):
+    def __init__(self, device):
         """
         Device (cuda string) and path to load CV Model (String)
         """
-        self.model = model
+
+        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn_v2(pretrained=True)
+        # get the number of input features 
+        in_features = self.model.roi_heads.box_predictor.cls_score.in_features
+        # define a new head for the detector with required number of classes
+        self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 1)
+
         self.device = device
         self.model.to(device)
+
+        self.image_id = 0
     
-    def predict_cv(self, img, gt_bboxes, gt_labels):
+    def predict_cv(self, images, batch_bboxes):
         """
-        Takes in PIL img, its bboxes (list) and labels (list) and outputs the cv model losses
+        Takes in PIL img, its bboxes (list) and outputs the cv model losses
         """
-        torch_img = F.pil_to_tensor(img)
-        x = torch.stack([torch_img.to(self.device).float()])
 
-        """
-        The DetDataSample must follow this format:
-        <DetDataSample(
+        images = list(F.pil_to_tensor(image).to(self.device) for image in images)
 
-            META INFORMATION
-            img_shape: _
-            scale_factor: _
+        targets = []
 
-            DATA FIELDS
-            batch_input_shape: _
-            gt_instances: <InstanceData(
+        for bboxes in batch_bboxes:
+            bboxes = torch.as_tensor(bboxes, dtype=torch.float32).to(self.device)
+            # area of the bounding boxes
+            area = (bboxes[:, 3] - bboxes[:, 1]) * (bboxes[:, 2] - bboxes[:, 0]).to(self.device)
+            # no crowd instances
+            iscrowd = torch.zeros((bboxes.shape[0],), dtype=torch.int64).to(self.device)
+            # labels to tensor
+            labels = torch.zeros(len(bboxes), dtype=torch.int64).to(self.device)
 
-                    META INFORMATION
+            target = {"boxes": bboxes, "labels": labels, "area": area, "iscrowd": iscrowd, "image_id": self.image_id}
+            self.image_id += 1
 
-                    DATA FIELDS
-                    bboxes: _
-                    labels: _
-                ) at _>
-        ) at _>
-        """
-        y = DetDataSample(metainfo={"img_shape": img.size, "scale_factor": (1, 1)})
-        y.batch_input_shape = img.size
+            targets.append(target)
+        
+        loss_dict = self.model(images, target)
 
-        gt_instances = InstanceData()
-        gt_instances.bboxes = torch.tensor(gt_bboxes).to(self.device).float()
-        gt_instances.labels = torch.tensor(gt_labels).to(self.device).long()
-
-        y.gt_instances = gt_instances
-
-        loss = self.model.loss(x, [y])
-
-        return loss
+        return loss_dict
