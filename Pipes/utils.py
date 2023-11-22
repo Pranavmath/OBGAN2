@@ -6,7 +6,7 @@ import numpy as np
 mask = Image.open("OBGAN2/mask.png").convert("L").resize((140, 140))
 
 # The Minimum value that a sum of a row/column has to be to be counted as part of the nodule and not part of the background
-MIN_SUM = 7
+MIN_SUM = 70
 
 centerposes = np.load("OBGAN2/centerposeshist.npy")
 centerx_distrubution = stats.rv_histogram(np.histogram(centerposes[0], bins=500))
@@ -42,7 +42,7 @@ def get_centerx_getcentery(num_nodules):
 # Takes in PIL Image of nodule (+ its max size) and gets its dimension (width and height)
 # Not including the black background around the nodule
 def get_dim(nodule, max_size):
-    nodule = np.array(nodule.convert("L"))
+    nodule = np.array(nodule.convert("L")) / 255
     ones = np.ones((1, max_size))
 
     # Sums of each column - 1, max_size
