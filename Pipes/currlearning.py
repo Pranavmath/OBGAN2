@@ -47,6 +47,11 @@ wandb.init(project="curr_learning")
 
 ob_dataset = OBData(csv="OBGAN2/finalCXRDataset/final.csv", img_dir="OBGAN2/finalCXRDataset/images", control_img_dir="OBGAN2/finalCXRDataset/controlimages")
 
+valid_dataset = OBData(csv="OBGAN2/newtest/newtest.csv", img_dir="OBGAN2/newtest/images", control_img_dir="OBGAN2/newtest/controlimages")
+
+valid_images_bboxes = valid_dataset.all_above_difficulty(0) + valid_dataset.get_control_images(num=83)
+
+# ---------------------------------------------------------------------------------------------
 
 # Build the model from a config file and a checkpoint file
 cv_model = LoadCVModel(device=device)
@@ -129,7 +134,7 @@ while curr_diff >= END_DIFF:
         all_images_bboxes = batch_data(all_images_bboxes, BATCH_SIZE)
 
 
-        sum_loss = 0
+        sum_train_loss = 0
 
         # Trains cv model on all images
         for images, batch_bboxes in all_images_bboxes:
@@ -143,12 +148,34 @@ while curr_diff >= END_DIFF:
             losses.backward()
             optimizer.step()
 
-            sum_loss += losses.item()
+            sum_train_loss += losses.item()
         
 
-        avg_loss = sum_loss/len(all_images_bboxes)
+        avg_train_loss = sum_train_loss/len(all_images_bboxes)
 
-        wandb.log({"epoch avg loss": avg_loss})
+        wandb.log({"train epoch avg loss": avg_train_loss})
+
+
+
+    random.shuffle(valid_images_bboxes)
+    valid_batched_images_bboxes = batch_data(valid_images_bboxes, BATCH_SIZE)
+
+    sum_valid_loss = 0
+
+    # Trains cv model on all images
+    for images, batch_bboxes in valid_batched_images_bboxes:
+        # Takes image, bboxes of objects of objcets and gets loss as dict
+        with torch.no_grad():
+            loss_dict = cv_model.predict_cv(images=images, batch_bboxes=batch_bboxes)
+            losses = sum(loss for loss in loss_dict.values())
+            sum_valid_loss += losses.item()
+
+
+    avg_valid_loss = sum_valid_loss/len(valid_batched_images_bboxes)
+
+    wandb.log({"valid diff step avg loss": avg_valid_loss})
+
+
 
     # Steps the current difficulty down (makes it harder)
     curr_diff -= STEP
