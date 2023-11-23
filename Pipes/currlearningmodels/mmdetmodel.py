@@ -34,7 +34,7 @@ class LoadCVModel():
         Takes in PIL img, its bboxes (list) and outputs the cv model losses
         """
 
-        images = list(F.pil_to_tensor(image).to(self.device) for image in images)
+        images = list(F.to_tensor(image).to(self.device) for image in images)
 
         targets = []
 
@@ -52,6 +52,6 @@ class LoadCVModel():
 
             targets.append(target)
         
-        loss_dict = self.model(images, target)
+        loss_dict = self.model(images, targets)
 
         return loss_dict

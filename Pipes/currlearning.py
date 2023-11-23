@@ -2,21 +2,20 @@ import numpy as np
 import torch
 from torch import optim
 
-from mmdet.apis import init_detector
-
 from Pipes.currlearningmodels.lunggen import LoadLungGenerator
 from Pipes.currlearningmodels.nodulegen import LoadNoduleGenerator
 from Pipes.currlearningmodels.mmdetmodel import LoadCVModel
 from data import OBData
 from utils import place_nodules, get_centerx_getcentery, get_dim, get_fake_difficulties, batch_data
 import random
+from time import time
 
 import wandb
 
 # The maximum size of a nodule (length)
 MAX_SIZE = 140
 # Starting Difficulty
-START_DIFF = 0.96
+START_DIFF = 0.4275
 # Step in difficulty when training the model (change in difficulty must be negative beacause smaller difficulty means it's harder)
 STEP = 0.0167
 # Ending Difficulty
@@ -24,11 +23,11 @@ END_DIFF = 0.01
 # Number of Fake Images at the starting difficulty
 START_NUM_FAKE = 400
 # Number of Fake Images at the ending difficulty
-END_NUM_FAKE = 0
+END_NUM_FAKE = 500
 # Number of epochs for each step in difficulty
-NUM_EPOCHS_FOR_STEP = 3
+NUM_EPOCHS_FOR_STEP = 2
 # Batch Size
-BATCH_SIZE = 3
+BATCH_SIZE = 8
 # CUDA DEVICE
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -91,6 +90,7 @@ while curr_diff >= END_DIFF:
         # The fake difficulties to use (a bunch of random difficulties at the current difficulty and above)
         fake_difficulties = get_fake_difficulties(curr_difficulty=curr_diff, num_of_difficulties=num_fake)
 
+
         # Gets NUM_FAKE number of fake images/bboxes at the sampled fake difficulties
         for fake_diff in fake_difficulties:
             # Number of nodules in this given fake image
@@ -123,7 +123,7 @@ while curr_diff >= END_DIFF:
 
             fake_images_bboxes.append((fake_image, fake_bboxes))
         
-
+        
         # Get the control images (no nodules) and bboxes. Make sure to get the same amount as the real images + fake images so data is balanced
         control_images_bboxes = ob_dataset.get_control_images(num=len(real_images_bboxes) + len(fake_images_bboxes))
 
