@@ -45,7 +45,7 @@ class LoadCVModel():
             # no crowd instances
             iscrowd = torch.zeros((bboxes.shape[0],), dtype=torch.int64).to(self.device)
             # labels to tensor
-            labels = torch.zeros(len(bboxes), dtype=torch.int64).to(self.device)
+            labels = torch.ones(len(bboxes), dtype=torch.int64).to(self.device)
 
             target = {"boxes": bboxes, "labels": labels, "area": area, "iscrowd": iscrowd, "image_id": self.image_id}
             self.image_id += 1
