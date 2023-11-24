@@ -22,7 +22,7 @@ class LoadCVModel():
         # get the number of input features 
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
         # define a new head for the detector with required number of classes
-        self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 1)
+        self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 2)
 
         self.device = device
         self.model.to(device)
