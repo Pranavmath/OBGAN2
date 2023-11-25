@@ -27,7 +27,7 @@ END_NUM_FAKE = 500
 # Number of epochs for each step in difficulty
 NUM_EPOCHS_FOR_STEP = 2
 # Batch Size
-BATCH_SIZE = 8
+BATCH_SIZE = 4
 # CUDA DEVICE
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
