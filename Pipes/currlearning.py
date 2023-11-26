@@ -27,7 +27,7 @@ END_NUM_FAKE = 500
 # Number of epochs for each step in difficulty
 NUM_EPOCHS_FOR_STEP = 2
 # Batch Size
-BATCH_SIZE = 8
+BATCH_SIZE = 10
 # CUDA DEVICE
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -79,6 +79,7 @@ print("Starting")
 while curr_diff >= END_DIFF:
     # Num fake images (calculated from curr_diff)
     num_fake = int(END_NUM_FAKE + ((START_NUM_FAKE - END_NUM_FAKE)/(START_DIFF - END_DIFF)) * (curr_diff - END_DIFF))
+    
 
     for e in range(NUM_EPOCHS_FOR_STEP):
         # Gets all the real images and nodules - [(real_image1, real_bbox1), ...] above a given difficulty
