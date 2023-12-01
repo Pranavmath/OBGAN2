@@ -55,11 +55,11 @@ valid_images_bboxes = valid_dataset.all_above_difficulty(0) + valid_dataset.get_
 # Build the model from a config file and a checkpoint file
 cv_model = LoadCVModel(device=device)
 
-
+"""
 # Generators
 lung_generator = LoadLungGenerator(device=device, path="OBGAN2/savedmodels/080000_g.model")
 nodule_generator = LoadNoduleGenerator(device=device, path="OBGAN2/savedmodels/nodulegenerator.pth")
-
+"""
 
 # Optimizer
 # Lr needs to be low enough or error
@@ -78,20 +78,21 @@ print("Starting")
 
 while curr_diff >= END_DIFF:
     # Num fake images (calculated from curr_diff)
-    num_fake = int(END_NUM_FAKE + ((START_NUM_FAKE - END_NUM_FAKE)/(START_DIFF - END_DIFF)) * (curr_diff - END_DIFF))
+    #num_fake = int(END_NUM_FAKE + ((START_NUM_FAKE - END_NUM_FAKE)/(START_DIFF - END_DIFF)) * (curr_diff - END_DIFF))
     
-
+    # Gets all the real images and nodules - [(real_image1, real_bbox1), ...] above a given difficulty
+    real_images_bboxes = ob_dataset.all_above_difficulty(curr_diff)
+    
+    
     for e in range(NUM_EPOCHS_FOR_STEP):
-        # Gets all the real images and nodules - [(real_image1, real_bbox1), ...] above a given difficulty
-        real_images_bboxes = ob_dataset.all_above_difficulty(curr_diff)
-
+        """
         # All the fake images and nodules - [(fake_image1, fake_bbox1), ...] at (and above) this difficulty
         fake_images_bboxes = []
 
         # The fake difficulties to use (a bunch of random difficulties at the current difficulty and above)
         fake_difficulties = get_fake_difficulties(curr_difficulty=curr_diff, num_of_difficulties=num_fake)
 
-
+        
         # Gets NUM_FAKE number of fake images/bboxes at the sampled fake difficulties
         for fake_diff in fake_difficulties:
             # Number of nodules in this given fake image
@@ -123,13 +124,13 @@ while curr_diff >= END_DIFF:
             fake_image = place_nodules(background_image=background_lung_image, nodules=nodules, center_xy_nodules=center_xys)
 
             fake_images_bboxes.append((fake_image, fake_bboxes))
-        
+        """
         
         # Get the control images (no nodules) and bboxes. Make sure to get the same amount as the real images + fake images so data is balanced
-        control_images_bboxes = ob_dataset.get_control_images(num=len(real_images_bboxes) + len(fake_images_bboxes))
+        control_images_bboxes = ob_dataset.get_control_images(num=len(real_images_bboxes))
 
         # Shuffles the real (with nodule), fake, and control images/bboxes
-        all_images_bboxes = real_images_bboxes + fake_images_bboxes + control_images_bboxes
+        all_images_bboxes = real_images_bboxes + control_images_bboxes #+ fake_images_bboxes 
         random.shuffle(all_images_bboxes)
 
         all_images_bboxes = batch_data(all_images_bboxes, BATCH_SIZE)
