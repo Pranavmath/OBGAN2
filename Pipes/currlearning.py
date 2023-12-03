@@ -83,8 +83,12 @@ while curr_diff >= END_DIFF:
     # Gets all the real images and nodules - [(real_image1, real_bbox1), ...] above a given difficulty
     real_images_bboxes = ob_dataset.all_above_difficulty(curr_diff)
     
+    if curr_diff <= 0.07:
+        num_epochs = 4
+    else:
+        num_epochs = NUM_EPOCHS_FOR_STEP
     
-    for e in range(NUM_EPOCHS_FOR_STEP):
+    for e in range(num_epochs):
         """
         # All the fake images and nodules - [(fake_image1, fake_bbox1), ...] at (and above) this difficulty
         fake_images_bboxes = []
