@@ -160,22 +160,19 @@ while curr_diff >= END_DIFF:
 
 
     random.shuffle(valid_images_bboxes)
-    valid_batched_images_bboxes = batch_data(valid_images_bboxes, BATCH_SIZE)
-
-    sum_valid_loss = 0
+    sum_valid_iou = 0
 
     # Trains cv model on all images
-    for images, batch_bboxes in valid_batched_images_bboxes:
+    for image, gt_bboxes in valid_images_bboxes:
         # Takes image, bboxes of objects of objcets and gets loss as dict
         with torch.no_grad():
-            loss_dict = cv_model.predict_cv(images=images, batch_bboxes=batch_bboxes)
-            losses = sum(loss for loss in loss_dict.values())
-            sum_valid_loss += losses.item()
+            iou = cv_model.iou(image=image, gt_bboxes=gt_bboxes)
+            sum_valid_iou += iou["iou"].item()
 
 
-    avg_valid_loss = sum_valid_loss/len(valid_batched_images_bboxes)
+    avg_valid_iou = sum_valid_iou/len(valid_images_bboxes)
 
-    wandb.log({"valid diff step avg loss": avg_valid_loss})
+    wandb.log({"valid diff step avg iou": avg_valid_iou})
 
 
 

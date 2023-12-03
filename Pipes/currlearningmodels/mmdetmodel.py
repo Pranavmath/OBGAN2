@@ -11,6 +11,10 @@ import torch
 import torchvision.transforms.functional as F
 import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+import torchmetrics
+
+metric = torchmetrics.detection.mean_ap.MeanAveragePrecision()
+
 
 class LoadCVModel():
     def __init__(self, device):
@@ -55,3 +59,25 @@ class LoadCVModel():
         loss_dict = self.model(images, targets)
 
         return loss_dict
+    
+    def iou(self, image, gt_bboxes):
+        prediction = self.model([F.to_tensor(image).to(self.device)])[0]
+
+        # Bounding boxes
+        bounding_boxes = prediction["boxes"].cpu()
+        confidence_score = prediction["scores"].cpu()
+
+        pred = {
+            "boxes": torch.tensor(bounding_boxes),
+            "scores": torch.tensor(confidence_score),
+            "labels": torch.ones(len(bounding_boxes), dtype=torch.int8)
+        }
+
+        t = {
+            "boxes": torch.tensor(gt_bboxes),
+            "labels":  torch.ones(len(gt_bboxes), dtype=torch.int8)
+        }
+
+        iou = metric([pred], [t])
+
+        return iou
