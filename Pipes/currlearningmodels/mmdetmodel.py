@@ -13,7 +13,7 @@ import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 import torchmetrics
 
-metric = torchmetrics.detection.mean_ap.MeanAveragePrecision()
+metric = torchmetrics.detection.iou.IntersectionOverUnion()
 
 
 class LoadCVModel():
