@@ -1,13 +1,14 @@
 from data import OBData
 from PIL import Image
-from utils import get_centerx_getcentery
 
 ob_dataset = OBData(csv="finalCXRDataset/final.csv", img_dir="finalCXRDataset/images", control_img_dir="finalCXRDataset/controlimages")
 
 data = ob_dataset.get_from_difficulty(0.51, 0.085)
 
+i = 0
 
-nodule_imgs = []
+nodule_imgs = {}
+
 for image, nodules in data:
     for nodule in nodules:
         xmin, ymin, xmax, ymax = nodule
@@ -21,25 +22,28 @@ for image, nodules in data:
         nodule_img4 = nodule_img.transpose(Image.ROTATE_180)
         nodule_img5 = nodule_img.transpose(Image.ROTATE_270)
         
-        nodule_imgs.append(nodule_img)
-        nodule_imgs.append(nodule_img1)
-        nodule_imgs.append(nodule_img2)
-        nodule_imgs.append(nodule_img3)
-        nodule_imgs.append(nodule_img4)
-        nodule_imgs.append(nodule_img5)
+        nodule_img1.save(f"nodulegendataset/trainB/{i}.jpg")
+        nodule_imgs[i] = (xmax - xmin) * (ymax - ymin) / (140 ** 2)
+        i += 1
+
+        nodule_img2.save(f"nodulegendataset/trainB/{i}.jpg")
+        nodule_imgs[i] = (xmax - xmin) * (ymax - ymin) / (140 ** 2)
+        i += 1
+
+        nodule_img3.save(f"nodulegendataset/trainB/{i}.jpg")
+        nodule_imgs[i] = (xmax - xmin) * (ymax - ymin) / (140 ** 2)
+        i += 1
+
+        nodule_img4.save(f"nodulegendataset/trainB/{i}.jpg")
+        nodule_imgs[i] = (xmax - xmin) * (ymax - ymin) / (140 ** 2)
+        i += 1
+
+        nodule_img5.save(f"nodulegendataset/trainB/{i}.jpg")
+        nodule_imgs[i] = (xmax - xmin) * (ymax - ymin) / (140 ** 2)
+        i += 1
 
 
-control_data = ob_dataset.get_control_images(num = len(nodule_imgs))
+import json
 
-patch_imgs = []
-for image, _ in control_data:
-    centerx, centery = get_centerx_getcentery(1)[0]
-    patch_img = image.crop([centerx - 70, centery - 70, centerx + 70, centery + 70])
-    patch_imgs.append(patch_img)
-
-
-for i, img in enumerate(patch_imgs):
-    img.save(f"nodulegendataset/trainA/{i}.jpg")
-
-for i, img in enumerate(nodule_imgs):
-    img.save(f"nodulegendataset/trainB/{i}.jpg")
+with open('data.json', 'w') as fp:
+    json.dump(nodule_imgs, fp)
