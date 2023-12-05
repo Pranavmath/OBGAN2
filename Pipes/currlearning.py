@@ -176,6 +176,9 @@ while curr_diff >= END_DIFF:
 
     avg_valid_iou = sum_valid_iou/len(valid_images_bboxes)
 
+    if (avg_valid_iou >= 0.36):
+        torch.save(cv_model.model.state_dict(), f"dino{avg_valid_iou}.pth")
+
     wandb.log({"valid diff step avg iou": avg_valid_iou})
 
 
