@@ -1,82 +1,48 @@
-import numpy as np
-import torch
-from Pipes.currlearningmodels.lunggen import LoadLungGenerator
-from Pipes.currlearningmodels.nodulegen import LoadNoduleGenerator
-from utils import place_nodules, get_centerx_getcentery, get_dim
 from data import OBData
-import random
-from tqdm import tqdm
-import torchvision.transforms.functional as F
-import torchvision
-from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-import matplotlib.pyplot as plt
-import torchmetrics
 
-# --------------------------------------------------------------------------
-
+# The maximum size of a nodule (length)
 MAX_SIZE = 140
+# Starting Difficulty
+START_DIFF = 0.4275
+# Step in difficulty when training the model (change in difficulty must be negative beacause smaller difficulty means it's harder)
+STEP = 0.0167
+# Ending Difficulty
+END_DIFF = 0.01
+# Number of Fake Images at the starting difficulty
+START_NUM_FAKE = 400
+# Number of Fake Images at the ending difficulty
+END_NUM_FAKE = 500
+# Number of epochs for each step in difficulty
+NUM_EPOCHS_FOR_STEP = 2
+# Batch Size
+BATCH_SIZE = 10
 
-# CUDA DEVICE
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-metric = torchmetrics.detection.mean_ap.MeanAveragePrecision()
-
-curr_model = torchvision.models.detection.fasterrcnn_resnet50_fpn_v2(pretrained=False)
-in_features = curr_model.roi_heads.box_predictor.cls_score.in_features
-# define a new head for the detector with required number of classes
-curr_model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 2)
-
-curr_model.load_state_dict(torch.load("/content/rcnn_curr.pth"))
-curr_model.to(device)
-curr_model.eval()
-
-valid_dataset = OBData(csv="OBGAN2/newtest/newtest.csv", img_dir="OBGAN2/newtest/images", control_img_dir="OBGAN2/newtest/controlimages")
 
 # ------------------------------------- ACTUAL CODE ---------------------------------------------
 
-def eval(image, gt_bboxes):
-    prediction = curr_model([F.to_tensor(image).to(device)])[0]
+ob_dataset = OBData(csv="finalCXRDataset/final.csv", img_dir="finalCXRDataset/images", control_img_dir="finalCXRDataset/controlimages")
 
-    # Bounding boxes
-    bounding_boxes = prediction["boxes"].cpu()
-    confidence_score = prediction["scores"].cpu()
+# Current (Start) Difficulty
+curr_diff = START_DIFF
 
-    pred = {
-        "boxes": torch.tensor(bounding_boxes),
-        "scores": torch.tensor(confidence_score),
-        "labels": torch.ones(len(bounding_boxes), dtype=torch.int8)
-    }
+print("Starting")
 
-    t = {
-        "boxes": torch.tensor(gt_bboxes),
-        "labels":  torch.ones(len(gt_bboxes), dtype=torch.int8)
-    }
+sum_images_trained = 0
 
-    iou = metric([pred], [t])
-
-    return iou
-
-
-# Generators
-lung_generator = LoadLungGenerator(device=device, path="OBGAN2/savedmodels/080000_g.model")
-nodule_generator = LoadNoduleGenerator(device=device, path="OBGAN2/savedmodels/nodulegenerator.pth")
-
-diffs = np.linspace(0, 1, num=100)
-avg_ious = []
-
-for diff in tqdm(diffs):
-    sum_iou = 0
-
-    ayo = valid_dataset.get_from_difficulty(difficulty=diff, delta=0.02)
-
-    for image, bboxes in ayo:    
-        iou = eval(image=image, gt_bboxes=bboxes)
-        sum_iou += iou
+while curr_diff >= END_DIFF:
+    real_images_bboxes = len(ob_dataset.all_above_difficulty(curr_diff))
+    control_images_bboxes = len(ob_dataset.get_control_images(num=len(real_images_bboxes)))
+    all_images_bboxes = real_images_bboxes + control_images_bboxes
     
+    if curr_diff <= 0.07:
+        num_epochs = 4
+    else:
+        num_epochs = NUM_EPOCHS_FOR_STEP
+    
+    for e in range(num_epochs):
+        sum_images_trained += all_images_bboxes
+    
+    print(sum_images_trained)
 
-    avg_iou = sum_iou/len(ayo)
-    avg_ious.append(avg_iou)
-
-
-plt.plot(diffs, avg_ious)
-plt.savefig("taquavion.png")
+    # Steps the current difficulty down (makes it harder)
+    curr_diff -= STEP
