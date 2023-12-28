@@ -8,26 +8,35 @@ data = ob_dataset.all_below_difficulty(0.51)
 
 i = 0
 
-nodule_imgs = {}
-
-def overlay_black(img, bbox):
-    img1 = ImageDraw.Draw(img)
-    img1.rectangle(bbox, fill="#000000")
-    return img
+PAD = 30
 
 for image, nodules in tqdm(data):
     for nodule in nodules:
         xmin, ymin, xmax, ymax = nodule
+        width, height = xmax-xmin, ymax-ymin
 
-        nodule_img = image.crop([xmin - 7, ymin - 7, xmax + 7, ymax + 7])
-        nodule_img = nodule_img.resize((140, 140))
+        if height >= width:
+            l = 2 * PAD + height
+            crop = [xmin - (l - width) // 2, ymin - PAD, xmax + (l - width) // 2, ymax + PAD]
+            location_nodule = [(l - width) // 2, PAD, (l - width) // 2 + width, height + PAD]
+        
+        if width > height:
+            l = 2 * PAD + width
+            crop = [xmin - PAD, ymin - (l - height) // 2, xmax + PAD, ymax + (l - height) // 2]
+            location_nodule = [PAD, (l - height) // 2, width + PAD, (l - height) // 2 + height]
 
-        nodule_img.save(f"nodulegendataset/trainB/{i}.jpg")
+
+        nodule_img = image.crop(crop)
+
+        mask = Image.new(mode = "RGB", size = (l, l), color = (255, 255, 255))
+        mask_draw = ImageDraw.Draw(mask)
+        mask_draw.rectangle(location_nodule, fill = "#000000")
+
+
+        nodule_img = nodule_img.resize((256, 256))
+        mask = mask.resize((256, 256))
+
+
+        nodule_img.save(f"nodulegendataset/nodules/{i}.jpg")
+        mask.save(f"nodulegendataset/masks/{i}.jpg")
         i += 1
-
-"""
-import json
-
-with open('data.json', 'w') as fp:
-    json.dump(nodule_imgs, fp)
-"""
