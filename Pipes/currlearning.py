@@ -105,13 +105,14 @@ while curr_diff >= END_DIFF:
             center_xys = get_centerx_getcentery(num_nodules=num_nodules_in_image)
             
             # Sizes of each nodule: [(width1, height1), ...]
-            sizes_nodules = [t for t in get_width_and_height(diff=fake_diff)]
+            sizes_nodules = [get_width_and_height(diff=fake_diff) for _ in range(num_nodules_in_image)]
 
             # Gets the bbox of each nodule on the lung image
             fake_bboxes = []
             for nodule_idx in range(num_nodules_in_image):
                 centerx, centery = center_xys[nodule_idx]
                 width, height = sizes_nodules[nodule_idx]
+                width, height = int(width), int(height)
                 
                 # Lung patch and mask
                 lung_patch, mask = get_mask_image_patch(lung_img=background_lung_image, centerx=centerx, centery=centery, width=width, height=height)
