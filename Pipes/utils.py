@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageDraw
 import random
 from scipy import stats
 import numpy as np
@@ -7,6 +7,9 @@ mask = Image.open("OBGAN2/mask.png").convert("L").resize((140, 140))
 
 # The Minimum value that a sum of a row/column has to be to be counted as part of the nodule and not part of the background
 MIN_SUM = 70
+
+# The Padding value used to prepare the dataset for training the nodule generator
+PAD = 30
 
 centerposes = np.load("OBGAN2/centerposeshist.npy")
 centerx_distrubution = stats.rv_histogram(np.histogram(centerposes[0], bins=500))
@@ -89,3 +92,33 @@ def get_fake_difficulties(curr_difficulty, num_of_difficulties):
     if curr_difficulty == 1:
       curr_difficulty = 0.99
     return stats.truncweibull_min.rvs(a=curr_difficulty, size=num_of_difficulties, b=1, c=1)
+
+
+def get_width_and_height(diff):
+    nodule_area =  diff * (140 ** 2)
+    square_length = nodule_area ** 0.5
+
+    width = random.randint(int(square_length / 1.4), int(square_length))
+    height = nodule_area // width
+
+    return width, height
+
+
+# Gets the mask and the image patch (from the control lung image) without nodules
+# Goes into nodule inpainter to add nodule
+def get_mask_image_patch(lung_img, centerx, centery, width, height):
+    if height >= width:
+        l = 2 * PAD + height
+        location_nodule = [(l - width) // 2, PAD, (l - width) // 2 + width, height + PAD]
+        
+    if width > height:
+        l = 2 * PAD + width
+        location_nodule = [PAD, (l - height) // 2, width + PAD, (l - height) // 2 + height]
+    
+    nodule_img = lung_img.crop(centerx - l // 2, centery - l // 2, centerx + l // 2, centery + l // 2)
+    
+    mask = Image.new(mode = "RGB", size = (l, l), color = (255, 255, 255))
+    mask_draw = ImageDraw.Draw(mask)
+    mask_draw.rectangle(location_nodule, fill = "#000000")
+
+    return nodule_img, mask

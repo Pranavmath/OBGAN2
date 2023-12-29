@@ -1,24 +1,19 @@
-from data import OBData
-from PIL import Image, ImageDraw 
+from currlearningmodels.nodulegen import LoadNoduleGenerator
+from utils import get_mask_image_patch
+from PIL import Image
+
+device = "cuda"
+
+ng = LoadNoduleGenerator(device=device, path=)
+
+lung_img = Image.open("finalCXRDataset/controlimages/c0006.png")
+centerx, centery = 640, 256
+width = 40 
+height = 50
+
+lung_patch, mask = get_mask_image_patch(lung_img=lung_img, centerx=centerx, centery=centery, width=width, height=height)
 
 
-ob_dataset = OBData(csv="finalCXRDataset/final.csv", img_dir="finalCXRDataset/images", control_img_dir="finalCXRDataset/controlimages")
+nodule_imgs = ng.nodule_predict(masks=[mask], lung_patches=[lung_patch])
 
-print("Starting")
-
-sum = 0
-
-for i in range(len(ob_dataset)):
-    img, nodules = ob_dataset[i]
-
-    if len(nodules) >= 3:
-        if sum >= 1:
-            for nodule in nodules:
-                img1 = ImageDraw.Draw(img)
-                img1.rectangle(nodule, outline="red", width=4)
-
-            img.show()
-
-            break
-
-        sum += 1
+nodule_imgs[0].save("ayo.jpg")
