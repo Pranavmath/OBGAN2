@@ -40,3 +40,9 @@ for image, nodules in tqdm(data):
         nodule_img.save(f"nodulegendataset/nodules/{i}.jpg")
         mask.save(f"nodulegendataset/masks/{i}.jpg")
         i += 1
+
+        nodule_img = nodule_img.transpose(Image.FLIP_LEFT_RIGHT)
+        mask = mask.transpose(Image.FLIP_LEFT_RIGHT)
+        nodule_img.save(f"nodulegendataset/nodules/{i}.jpg")
+        mask.save(f"nodulegendataset/masks/{i}.jpg")
+        i += 1
