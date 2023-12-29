@@ -4,12 +4,16 @@ from torch.nn import functional as F
 from torchvision.utils import make_grid
 from PIL import Image
 from torchvision import transforms
-import opt
 import torch
+
+MEAN = [0.485, 0.456, 0.406]
+STD = [0.229, 0.224, 0.225]
+
+LAMBDA_DICT = {'valid': 1.0, 'hole': 6.0, 'tv': 0.1, 'prc': 0.05, 'style': 120.0}
 
 def unnormalize(x):
     x = x.transpose(1, 3)
-    x = x * torch.Tensor(opt.STD) + torch.Tensor(opt.MEAN)
+    x = x * torch.Tensor(STD) + torch.Tensor(MEAN)
     x = x.transpose(1, 3)
     return x
 
@@ -23,9 +27,9 @@ class LoadNoduleGenerator():
         
         self.nodule_gen = PConvUNet().to(device)
         # Do this by uploading the .model file dont use github
-        self.nodule_gen.load_state_dict(torch.load(path, map_location=device))
+        self.nodule_gen.load_state_dict(torch.load(path, map_location=device)["model"])
 
-        self.img_tf = transforms.Compose([transforms.Resize(size=(256, 256)), transforms.ToTensor(), transforms.Normalize(mean=opt.MEAN, std=opt.STD)])
+        self.img_tf = transforms.Compose([transforms.Resize(size=(256, 256)), transforms.ToTensor(), transforms.Normalize(mean=MEAN, std=STD)])
         self.mask_tf = transforms.Compose([transforms.Resize(size=(256, 256)), transforms.ToTensor()])
 
     # Return pil image(s) fron nodule generator
@@ -37,15 +41,17 @@ class LoadNoduleGenerator():
         imgs = []
 
         for i in range(len(masks)):
-          mask = self.mask_tf(masks[i]).to(self.device)
-          lung_patch = self.img_tf(lung_patches[i]).to(self.device)
+          mask = self.mask_tf(masks[i].convert("RGB")).to(self.device)
+          lung_patch = self.img_tf(lung_patches[i].convert("RGB")).to(self.device)
           lung_patch *= mask
 
           with torch.no_grad():
-            output, _ = self.nodule_gen(lung_patch, mask)
+            output, _ = self.nodule_gen(lung_patch.unsqueeze(0), mask.unsqueeze(0))
           
           output_comp = mask * lung_patch + (1 - mask) * output
-          unnormalize(output_comp)
+          output_comp = output_comp.cpu()
+
+          output_comp = unnormalize(output_comp)
           
           grid = make_grid(output_comp)
           # Add 0.5 after unnormalizing to [0, 255] to round to the nearest integer

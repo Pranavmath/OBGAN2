@@ -115,7 +115,7 @@ def get_mask_image_patch(lung_img, centerx, centery, width, height):
         l = 2 * PAD + width
         location_nodule = [PAD, (l - height) // 2, width + PAD, (l - height) // 2 + height]
     
-    nodule_img = lung_img.crop(centerx - l // 2, centery - l // 2, centerx + l // 2, centery + l // 2)
+    nodule_img = lung_img.crop([centerx - l // 2, centery - l // 2, centerx + l // 2, centery + l // 2])
     
     mask = Image.new(mode = "RGB", size = (l, l), color = (255, 255, 255))
     mask_draw = ImageDraw.Draw(mask)
