@@ -20,7 +20,7 @@ END_DIFF = 0.01
 # Number of Fake Images at the starting difficulty
 START_NUM_FAKE = 400
 # Number of Fake Images at the ending difficulty
-END_NUM_FAKE = 500
+END_NUM_FAKE = 300
 # Number of epochs for each step in difficulty
 NUM_EPOCHS_FOR_STEP = 2
 # Batch Size
@@ -59,10 +59,6 @@ nodule_generator = LoadNoduleGenerator(device=device, path="INSERT PATH HERE")
 # Lr needs to be low enough or error
 optimizer = optim.Adam(params=cv_model.model.parameters(), lr=0.0007)
 
-
-# Set to training mode (if not already)
-cv_model.model.train()
-
 wandb.watch(cv_model.model, log_freq=100)
 
 # Current (Start) Difficulty
@@ -71,6 +67,9 @@ curr_diff = START_DIFF
 print("Starting")
 
 while curr_diff >= END_DIFF:
+    # Set to training mode (if not already)
+    cv_model.model.train()
+    
     # Num fake images (calculated from curr_diff)
     num_fake = int(END_NUM_FAKE + ((START_NUM_FAKE - END_NUM_FAKE)/(START_DIFF - END_DIFF)) * (curr_diff - END_DIFF))
     
@@ -166,6 +165,8 @@ while curr_diff >= END_DIFF:
         wandb.log({"train epoch avg loss": avg_train_loss})
 
 
+    # Set to evaluation mode (if not already)
+    cv_model.model.eval()
 
     random.shuffle(valid_images_bboxes)
     sum_valid_iou = 0
