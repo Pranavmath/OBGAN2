@@ -1,19 +1,23 @@
 from data import OBData
 from PIL import Image, ImageDraw
 from tqdm import tqdm
+from utils import get_centerx_getcentery, get_width_and_height
+import random
 
 ob_dataset = OBData(csv="finalCXRDataset/final.csv", img_dir="finalCXRDataset/images", control_img_dir="finalCXRDataset/controlimages")
 
-data = ob_dataset.all_below_difficulty(0.51)
+data = ob_dataset.get_control_images(num=3126)
 
 i = 0
 
 PAD = 30
 
-for image, nodules in tqdm(data):
-    for nodule in nodules:
-        xmin, ymin, xmax, ymax = nodule
-        width, height = xmax-xmin, ymax-ymin
+for image, _ in tqdm(data):
+    for _ in range(40):
+        diff = random.random()
+        centerx, centery = get_centerx_getcentery(1)[0]
+        width, height = get_width_and_height(diff)
+        xmin, ymin, xmax, ymax = centerx - width//2, centery - height//2, centerx + width//2, centery + height//2
 
         if height >= width:
             l = 2 * PAD + height
@@ -37,12 +41,6 @@ for image, nodules in tqdm(data):
         mask = mask.resize((256, 256))
 
 
-        nodule_img.save(f"nodulegendataset/nodules/{i}.jpg")
-        mask.save(f"nodulegendataset/masks/{i}.jpg")
-        i += 1
-
-        nodule_img = nodule_img.transpose(Image.FLIP_LEFT_RIGHT)
-        mask = mask.transpose(Image.FLIP_LEFT_RIGHT)
         nodule_img.save(f"nodulegendataset/nodules/{i}.jpg")
         mask.save(f"nodulegendataset/masks/{i}.jpg")
         i += 1
